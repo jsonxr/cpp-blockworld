@@ -11,14 +11,13 @@ written using modern c++ instead.
 Install
 
 - Install tools
-  ```shell
+  ```sh
   brew install direnv cmake node conan
   ```
 
-
 - [Conan package manager](https://conan.io/)
 
-  ```shell
+  ```sh
   # Conan version 2.23.0
   brew install conan
   conan remote update conancenter --url="https://center2.conan.io"
@@ -28,7 +27,7 @@ Install
 
 - Copy minecraft files...
 
-    ```shell
+    ```sh
     # Extract specific version to client/assets (latest at time of writing)
     bin/minecraft-extract --version=1.21.10 --force client/assets/minecraft
     # Extract latest minecraft assets to client/assets...
@@ -43,17 +42,11 @@ Install
 # libc++ vs stdlibc++ might depend on platform...
 # https://stackoverflow.com/questions/14972425/should-i-use-libc-or-libstdc
 
-
-# Install
-conan install . -s build_type=Debug -s compiler.libcxx=libc++ -s compiler.cppstd=gnu20 --output-folder=build --build=missing
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
-
+# Build
+bin/native-build
 # Run. Make sure you've previously extracted minecraft assets mentioned above
-BLOCKWORLD_ASSETS_PATH=$(pwd)/client/assets ./build/blockworld
+BLOCKWORLD_ASSETS_PATH=$(pwd)/client/assets ./build/native/blockworld
 
-# Release dependencies
-# conan install . -s build_type=Release -s compiler.libcxx=libc++ -s cppstd=20 --install-folder=cmake-build-release --build missing
 ```
 
 # Wasm
@@ -61,22 +54,10 @@ BLOCKWORLD_ASSETS_PATH=$(pwd)/client/assets ./build/blockworld
 ```sh
 # Install emscripten
 git clone https://github.com/emscripten-core/emsdk.git libs/emsdk
-libs/emsdk/emsdk install 4.0.20
-libs/emsdk/emsdk activate 4.0.20
-source libs/emsdk/emsdk_env.sh
-
-# Compile for wasm
-conan install . -pr profiles/emscripten -s build_type=Debug --output-folder=build-wasm --build missing
-emcmake cmake -S . -B build-wasm -DCMAKE_TOOLCHAIN_FILE=build-wasm/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-wasm
-
-# cd build-wasm
-# emcmake cmake .. -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" -DCMAKE_BUILD_TYPE=Debug
-# cmake --build .
-
-# Run app with pthread support (requires proper headers for SharedArrayBuffer)
-./bin/serve-wasm.js 8080   # Node.js server with pthread headers
-
+# Build
+bin/wasmbuild
+# Run
+bin/serve-wasm  # Node.js server with pthread headers
 open http://localhost:8080/
 
 #emcc src/main.cpp -o cmake-build-wasm/index.html -Iinclude -s USE_WEBGL2=1 -s USE_GLFW=3 -s WASM=1 -std=c++20 -fwasm-exceptions
@@ -89,13 +70,18 @@ open http://localhost:8080/
 
 `                       Desktop Browser               Mobile Browsers     Native`
 
-| Feature             | Chrome   | Firefox | Safari | Android  | iPhone | Wasmtime | Wasmer |
-|---------------------|----------|---------|--------|----------|--------|----------|--------|
-| Version             | 108      | 107     | 16.1   | 106      | 16.1   | no       | no     |
-| Exceptions          | ✓        | ✓       | ✓      | ✓        | ✓      | no       | no     |
-| Threads and atomics | ✓        | ✓       | ✓      | ✓        | ✓      | no       | no     |
-| WebGPU              | flag     | flag    | flag   | no       | no     | no       | no     |
+| Feature             | Chrome  | Firefox | Safari   | Android | iPhone | Wasmtime | Wasmer |
+| ------------------- | ------- | ------- | -------- | ------- | ------ | -------- | ------ |
+|                     | Desktop |         |          | Mobile  |        | Native   |        |
+| Current Version     | 142     | 145     | 26.1     | 142     | 26.0   | 39       | 6.0    |
+| Exception (exnref)  | 137     | 131     | 18.4     | ✓       | ✓      | [3]      | 6.0    |
+| Threads and atomics | 74      | 79      | 14.1     | ✓       | ✓      | 15       | 4.0    |
+| WebGPU              | 113 [1] | 145 [1] | 26.0 [2] | 142     | 26.0   | no [4]   | no [4] |
 
+- [1] linux behind flag
+- [2] Mac Tahoe, otherwise flag
+- [3] Requires flag --wasm=exceptions
+- [4] [wasi-gfx](https://github.com/WebAssembly/wasi-gfx) - Phase 2 Proposal
 
 
 

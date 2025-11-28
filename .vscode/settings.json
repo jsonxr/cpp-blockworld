@@ -1,5 +1,5 @@
 {
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "clang-tidy.fixOnSave": true,
   "clang-tidy.buildPath": "build",
   "C_Cpp.autoAddFileAssociations": false,
