@@ -1,63 +1,56 @@
 # BlockWorld clone
 
-Following along with the [YouTube series](https://www.youtube.com/watch?v=HhH_9DnMBgw).
+Following along with this [YouTube series](https://www.youtube.com/playlist?list=PLGKz7VcwUOnHtTCRomUVTnUy7Ey-Z73Pl)
+.  [Github repo](https://github.com/codingminecraft/MinecraftCloneForYoutube) for reference. This repo however is
+written using modern c++ instead.
+
+[![CodeFactor](https://www.codefactor.io/repository/github/jsonxr/blockworld/badge)](https://www.codefactor.io/repository/github/jsonxr/blockworld)
 
 # Setup
 
 Install
 
-- direnv `brew install direnv`
-- cmake `brew install cmake`
-- node `brew install node`
-- [emscripten](https://emscripten.org/)
-
-  ```sh
-  # Install
-  cd /opt
-  git clone https://github.com/emscripten-core/emsdk.git
-  cd /opt/emsdk
-  ```
-
-  ```sh
-  # Update to latest version
-  cd /opt/emsdk
-  git pull
-  ./emsdk install latest
-  ./emsdk activate latest
-
-  # If you are not using direnv, you will need to make sure you have the vars in .envrc
-  # source .envrc
+- Install tools
+  ```shell
+  brew install direnv cmake node conan
   ```
 
 
-- [Conan package manager](https://conan.io/) - `brew install conan`
-- Copy minecraft files...
+- [Conan package manager](https://conan.io/)
 
   ```shell
-  # Show available versions of minecraft on a mac
-  bin/minecraft-extract
-  # Extract specific version of minecraft
-  bin/minecraft-extract 1.18.2 client/assets/minecraft/assets/minecraft
+  # Conan version 2.23.0
+  brew install conan
+  conan remote update conancenter --url="https://center2.conan.io"
+  conan profile list # Lists the profiles...
+  conan profile detect # Create a default profile if it doesn't exist
   ```
+
+- Copy minecraft files...
+
+    ```shell
+    # Extract specific version to client/assets (latest at time of writing)
+    bin/minecraft-extract --version=1.21.10 --force client/assets/minecraft
+    # Extract latest minecraft assets to client/assets...
+    bin/minecraft-extract --force client/assets/minecraft
+    # Show available versions of minecraft on a mac
+    bin/minecraft-extract
+    ```
 
 # Desktop Compile
 
 ```sh
 # libc++ vs stdlibc++ might depend on platform...
 # https://stackoverflow.com/questions/14972425/should-i-use-libc-or-libstdc
+
+
 # Install
-conan install . -s build_type=Debug -s compiler.libcxx=libc++ -s cppstd=20 --install-folder=build --build missing
-cd build
-cmake ..
-cmake --build .
+conan install . -s build_type=Debug -s compiler.libcxx=libc++ -s compiler.cppstd=gnu20 --output-folder=build --build=missing
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
 
-# optional...
-# This will use the assets in the project instead of relying on cmake to copy.
-# This avoids being confused when you change a shader and nothing happens.
-export BLOCKWORLD_ASSETS_PATH=$(pwd)/client/assets
-
-# Run app...
-bin/blockworld
+# Run. Make sure you've previously extracted minecraft assets mentioned above
+BLOCKWORLD_ASSETS_PATH=$(pwd)/client/assets ./build/blockworld
 
 # Release dependencies
 # conan install . -s build_type=Release -s compiler.libcxx=libc++ -s cppstd=20 --install-folder=cmake-build-release --build missing
@@ -65,7 +58,34 @@ bin/blockworld
 
 # Wasm
 
-Uses Experimental Features: [WebAssembly Roadmap](https://webassembly.org/roadmap/)
+```sh
+# Install emscripten
+git clone https://github.com/emscripten-core/emsdk.git libs/emsdk
+libs/emsdk/emsdk install 4.0.20
+libs/emsdk/emsdk activate 4.0.20
+source libs/emsdk/emsdk_env.sh
+
+# Compile for wasm
+conan install . -pr profiles/emscripten -s build_type=Debug --output-folder=build-wasm --build missing
+emcmake cmake -S . -B build-wasm -DCMAKE_TOOLCHAIN_FILE=build-wasm/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-wasm
+
+# cd build-wasm
+# emcmake cmake .. -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" -DCMAKE_BUILD_TYPE=Debug
+# cmake --build .
+
+# Run app with pthread support (requires proper headers for SharedArrayBuffer)
+./bin/serve-wasm.js 8080   # Node.js server with pthread headers
+
+open http://localhost:8080/
+
+#emcc src/main.cpp -o cmake-build-wasm/index.html -Iinclude -s USE_WEBGL2=1 -s USE_GLFW=3 -s WASM=1 -std=c++20 -fwasm-exceptions
+```
+
+[wasm cmake dependencies](https://stackoverflow.com/questions/55869531/how-to-use-emscripten-with-cmake-for-project-dependencies)
+
+
+### Uses Experimental Features: [WebAssembly Roadmap](https://webassembly.org/roadmap/)
 
 `                       Desktop Browser               Mobile Browsers     Native`
 
@@ -77,20 +97,7 @@ Uses Experimental Features: [WebAssembly Roadmap](https://webassembly.org/roadma
 | WebGPU              | flag     | flag    | flag   | no       | no     | no       | no     |
 
 
-```sh
-conan install . -s build_type=Debug -s compiler.libcxx=libc++ -s cppstd=20 --install-folder=build-wasm --build missing
-cd build-wasm
-emcmake cmake ..
-cmake --build .
 
-# Run app...
-npx http-server bin  # This assumes node is installed...
-open http://127.0.0.1:8080/blockworld.html
-
-#emcc src/main.cpp -o cmake-build-wasm/index.html -Iinclude -s USE_WEBGL2=1 -s USE_GLFW=3 -s WASM=1 -std=c++20 -fwasm-exceptions
-```
-
-[wasm cmake dependencies](https://stackoverflow.com/questions/55869531/how-to-use-emscripten-with-cmake-for-project-dependencies)
 
 ### Exceptions
 
@@ -126,7 +133,7 @@ Install the following plugins, then follow compile directions.
 # Resources
 
 - [memory](https://www.gamedev.net/articles/programming/general-and-gameplay-programming/c-custom-memory-allocation-r3010/)
-  - Efficient memory allocation in games
+    - Efficient memory allocation in games
 - [optick](https://optick.dev/) - super-lightweight c++ profiler for games
 - [setup on mac. need to code sign?](https://giovanni.codes/opengl-setup-in-macos/)
 - [Better way to handle opengl resources](https://github.com/polytypic/gl.cpp)
@@ -158,7 +165,8 @@ https://en.cppreference.com/w/cpp/compiler_support
 ### Under consideration multithreading...
 
 - [Bungee's multithreading talk](https://www.youtube.com/watch?v=v2Q_zHG3vqg)
-- [Ron Fosner's Task-Based Multithreading](https://www.gdcvault.com/play/1012321/Task-based-Multithreading-How-to) Job's are ideally between 0.5-2 miliseconds so kinda big...
+- [Ron Fosner's Task-Based Multithreading](https://www.gdcvault.com/play/1012321/Task-based-Multithreading-How-to) Job's
+  are ideally between 0.5-2 miliseconds so kinda big...
 - [taskflow](https://github.com/taskflow/taskflow) - Task system for multi-threading. MIT License.
 
 # Tools
@@ -168,8 +176,8 @@ https://en.cppreference.com/w/cpp/compiler_support
 # TODO
 
 - Modify cmake to recompile for asset change
-  - [blog article](https://jeremimucha.com/2021/05/cmake-managing-resources/)
-  - [gist](https://gist.github.com/jamcodes/f79b3be24ed40c6c224cc9e91d3061cc)
+    - [blog article](https://jeremimucha.com/2021/05/cmake-managing-resources/)
+    - [gist](https://gist.github.com/jamcodes/f79b3be24ed40c6c224cc9e91d3061cc)
 - per vertex data... make vertex color use rgba=4bytes instead of 4 floats
 - [Faster compression than zlib](https://github.com/ebiggers/libdeflate)
 

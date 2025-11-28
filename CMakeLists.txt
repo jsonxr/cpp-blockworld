@@ -1,28 +1,34 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.28)
 project(blockworld)
 
+
+
+# This comes from conan install output... Look for: "conanfile.txt: CMakeDeps necessary find_package() and targets for your CMakeLists.txt"
+
+find_package(Boost)
+find_package(EnTT)
+find_package(expected-lite)
+find_package(glfw3)
+find_package(glad)
+find_package(glm)
+find_package(TinyGLTF)
+find_package(nlohmann_json)
+find_package(stb)
+find_package(Microsoft.GSL)
+
+
 set(CMAKE_CXX_STANDARD 20)
-set(CONAN_CMAKE_CXX_STANDARD 20)
-
-set(CONAN_COMPILER "apple-clang")
-set(CONAN_COMPILER_VERSION "14.0")
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Set macOS deployment target to match prebuilt Boost libraries (16.0)
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "16.0")
+endif()
 
 if (!EMSCRIPTEN)
     set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-p ${CMAKE_BINARY_DIR}/compile_commands.json")
 endif ()
 
-# Conan package manager include
-set(CONAN_COMPILER "cmake")
-set(CONAN_COMPILER_VERSION "13.0")
-
-if (EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup()
-else ()
-    message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
-endif ()
 
 include_directories(${PROJECT_SOURCE_DIR}/client/include ${PROJECT_SOURCE_DIR}/client/src)
 
@@ -57,8 +63,6 @@ list(APPEND SOURCES
         # src
         client/src/main.cpp
         client/src/utils/math.cpp
-        client/src/utils/memory.cpp
-        client/src/utils/executable.cpp
 
 
         client/src/core/textures/Image.cpp
@@ -67,17 +71,31 @@ list(APPEND SOURCES
 
         client/src/core/BlockMaterial.cpp
         client/src/core/Vertex.cpp
-        )
+)
 
+# Add desktop-only sources
+if(NOT EMSCRIPTEN)
+    list(APPEND SOURCES
+        client/src/utils/executable.cpp
+        client/src/utils/memory.cpp
+    )
+
+endif()
 
 if (EMSCRIPTEN)
-    add_compile_options("SHELL:-s USE_PTHREADS -pthread")
+    # Enable threading for web build
+    add_compile_options("-s" "USE_PTHREADS=1" "-pthread")
 endif ()
 
 add_executable(blockworld ${SOURCES} client/src/Application.cpp client/src/Application.h)
-target_link_libraries(blockworld ${CONAN_LIBS})
+#target_link_libraries(blockworld ${CONAN_LIBS})
 
-if (EMSCRIPTEN)
+
+if (DEFINED EMSCRIPTEN)
+
+    target_link_libraries(blockworld EnTT::EnTT nonstd::expected-lite glfw glad::glad glm::glm TinyGLTF::TinyGLTF nlohmann_json::nlohmann_json stb::stb Microsoft.GSL::GSL)
+
+
     #set(EMCC_LINKER_FLAGS " -s WASM=1 -O3 -o ../index.js -s --pre-js pre-module.js --post-js post-module.js -s USE_GLFW=3 -s OFFSCREENCANVAS_SUPPORT=1")
 
     # Optimization flags for emcc
@@ -129,10 +147,21 @@ if (EMSCRIPTEN)
     #    set(EMCC_LINKER_FLAGS "${FLAGS}")
 
 
-    set(EMCC_LINKER_FLAGS "-O0 --cpuprofiler --memoryprofiler -s USE_PTHREADS -pthread -s PTHREAD_POOL_SIZE=4 -s EXIT_RUNTIME=1 --bind -s INITIAL_MEMORY=512MB -s WASM=1  -s ALLOW_MEMORY_GROWTH=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s USE_GLFW=3 -s WASM_BIGINT=1 -std=c++${CMAKE_CXX_STANDARD} --embed-file ${PROJECT_SOURCE_DIR}/client/assets@/assets -s ASSERTIONS=1 -s DEMANGLE_SUPPORT=1 -s GL_ASSERTIONS=1")
+    set(EMCC_LINKER_FLAGS "-O0 --cpuprofiler --memoryprofiler -s EXIT_RUNTIME=1 --bind -s INITIAL_MEMORY=512MB -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s USE_GLFW=3 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=4 -pthread -s WASM_BIGINT=1 -std=c++${CMAKE_CXX_STANDARD} --embed-file ${PROJECT_SOURCE_DIR}/client/assets@/assets -s ASSERTIONS=1 -s GL_ASSERTIONS=1")
 
-    set(CMAKE_EXECUTABLE_SUFFIX .html)
-    set_target_properties(blockworld PROPERTIES LINK_FLAGS ${EMCC_LINKER_FLAGS})
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+
+    # Create html subdirectory and set as output directory
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/html)
+    set_target_properties(blockworld PROPERTIES
+        LINK_FLAGS ${EMCC_LINKER_FLAGS}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/html
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/html
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/html
+        OUTPUT_NAME "index"
+    )
 else ()
+    target_link_libraries(blockworld boost::boost EnTT::EnTT nonstd::expected-lite glfw glad::glad glm::glm TinyGLTF::TinyGLTF nlohmann_json::nlohmann_json stb::stb Microsoft.GSL::GSL)
+
     file(COPY client/assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
 endif ()
