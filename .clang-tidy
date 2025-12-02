@@ -59,7 +59,7 @@ Checks: >
   modernize-*,
   -modernize-return-braced-init-list,
   modernize-avoid-c-arrays,
-  -modernize-use-nodiscard,
+  modernize-use-nodiscard,
   performance-*,
   -performance-move-const-arg,
   portability-*,

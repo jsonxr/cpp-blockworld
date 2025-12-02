@@ -1,10 +1,11 @@
 #ifndef MINECRAFT_WINDOW_H
 #define MINECRAFT_WINDOW_H
-#include "../core.h"
 #include <cstdint>
+
+#include "../core.h"
 #include "Camera.h"
-#include "constants.h"
 #include "Input.h"
+#include "constants.h"
 
 namespace app {
 
@@ -40,8 +41,8 @@ class Window {
   Window(Window &&other) noexcept
       : size_(other.size_),
         native_window_(std::exchange(other.native_window_, nullptr)),
-        primary_monitor_(std::exchange(other.primary_monitor_,
-                                       nullptr)){};  // move constructor
+        primary_monitor_(std::exchange(other.primary_monitor_, nullptr)) {
+        };  // move constructor
   auto operator=(Window &&other) noexcept -> Window & {
     size_ = other.size_;
     std::swap(native_window_, other.native_window_);
@@ -53,10 +54,12 @@ class Window {
   //----------------------------------------------------------------------------
   // Properties
   //----------------------------------------------------------------------------
-  auto camera() const -> const Camera & { return camera_; }
+  [[nodiscard]] auto camera() const -> const Camera & { return camera_; }
   auto input() -> Input & { return input_; }
-  auto shouldClose() const noexcept -> bool;
-  auto nativeWindow() const noexcept -> GLFWwindow * { return native_window_; }
+  [[nodiscard]] auto shouldClose() const noexcept -> bool;
+  [[nodiscard]] auto nativeWindow() const noexcept -> GLFWwindow * {
+    return native_window_;
+  }
 
   //----------------------------------------------------------------------------
   // Methods

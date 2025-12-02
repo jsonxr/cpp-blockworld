@@ -31,8 +31,8 @@ class TextureAtlas {
   auto compile() -> GLuint;
   auto generatePixels() -> std::unique_ptr<TexturePixels>;
   auto add(TextureRect &&region) -> uint16;
- void save(const std::string &filename);
-  auto getRectByName(const std::string &name) const noexcept
+  void save(const std::string &filename);
+  [[nodiscard]] auto getRectByName(const std::string &name) const noexcept
       -> const TextureRect *;
   void loadFromDirectory(const std::string &prefix, const std::string &filepath,
                          bool sub_folders = false);

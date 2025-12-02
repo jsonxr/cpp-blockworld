@@ -31,14 +31,14 @@ class Camera {
   Camera() = default;
   explicit Camera(CameraOptions options);
 
-  auto view_matrix() const -> const mat4 &;
-  auto projection_matrix() const -> const mat4 &;
+  [[nodiscard]] auto view_matrix() const -> const mat4 &;
+  [[nodiscard]] auto projection_matrix() const -> const mat4 &;
 
   void set_options(CameraOptions options);
-  auto options() const -> const CameraOptions &;
+  [[nodiscard]] auto options() const -> const CameraOptions &;
 
-  auto forward() const -> const vec3 &;
-  auto position() const -> const vec3 &;
+  [[nodiscard]] auto forward() const -> const vec3 &;
+  [[nodiscard]] auto position() const -> const vec3 &;
 
  private:
   CameraOptions options_{};

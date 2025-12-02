@@ -18,14 +18,16 @@ using ChunkData = std::vector<int16>;
 class Chunk {
  public:
   Chunk(vec3 pos);
-  auto pos() const noexcept -> const vec3 &;
-  auto data() const noexcept -> const ChunkData &;
-  auto size() const noexcept -> int;
+  [[nodiscard]] auto pos() const noexcept -> const vec3 &;
+  [[nodiscard]] auto data() const noexcept -> const ChunkData &;
+  [[nodiscard]] auto size() const noexcept -> int;
   void generate(const BlockMap &map);
-  auto get_id_from_index(int index) const noexcept -> int16;
-  auto get_id_from_location(const ivec3 &loc) const noexcept -> int16;
-  auto get_location_from_index(int index) const noexcept -> ivec3;
-  auto get_index_from_location(const ivec3 &loc) const noexcept -> int;
+  [[nodiscard]] auto get_id_from_index(int index) const noexcept -> int16;
+  [[nodiscard]] auto get_id_from_location(const ivec3 &loc) const noexcept
+      -> int16;
+  [[nodiscard]] auto get_location_from_index(int index) const noexcept -> ivec3;
+  [[nodiscard]] auto get_index_from_location(const ivec3 &loc) const noexcept
+      -> int;
   int id_{};
 
  private:
@@ -40,7 +42,7 @@ class ChunkGfx {
   ChunkGfx(std::shared_ptr<Material> material, const Chunk &chunk,
            const BlockMap &blockMap, const TextureAtlas &atlas);
   void render(const Camera &camera) const;
-  auto pos() const -> const vec3 & { return pos_; }
+  [[nodiscard]] auto pos() const -> const vec3 & { return pos_; }
   int id_{};
 
  private:
