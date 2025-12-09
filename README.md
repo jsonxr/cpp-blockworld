@@ -64,7 +64,8 @@ rm -rf build CMakeUserPresets.json
 # Install emscripten
 git clone https://github.com/emscripten-core/emsdk.git libs/emsdk
 # Build
-bin/build --wasm
+cmake --preset wasm
+cmake --build --preset wasm
 
 # Run
 bin/serve-wasm  # Node.js server with pthread headers
