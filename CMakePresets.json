@@ -5,10 +5,11 @@
       "name": "default",
       "displayName": "Default Config",
       "description": "Default build",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_OSX_SYSROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
         "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++",
         "CMAKE_CXX_FLAGS": "-stdlib=libc++ -fexperimental-library",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
