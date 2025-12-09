@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.31)
 project(blockworld)
 
 
@@ -33,11 +33,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #     set(CMAKE_OSX_DEPLOYMENT_TARGET "16.0")
 # endif()
 
-if (NOT BUILDING_EMSCRIPTEN)
-    # Use llvm clang-tidy; pass build dir with -p to avoid grouping issues
-    # Only report diagnostics from project headers (client/*) to cut noise from deps
-    set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-p;${CMAKE_BINARY_DIR};--config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-header-filter;${PROJECT_SOURCE_DIR}/client/.*")
-endif ()
+# if (NOT BUILDING_EMSCRIPTEN)
+#     # Use llvm clang-tidy; pass build dir with -p to avoid grouping issues
+#     # Only report diagnostics from project headers (client/*) to cut noise from deps
+#     set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-p;${CMAKE_BINARY_DIR};--config-file=${CMAKE_SOURCE_DIR}/.clang-tidy;-header-filter;${PROJECT_SOURCE_DIR}/client/.*")
+# endif ()
 
 
 include_directories(${PROJECT_SOURCE_DIR}/client/include ${PROJECT_SOURCE_DIR}/client/src)

@@ -1,0 +1,62 @@
+# # Use homebrew llvm
+LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
+CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
+CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
+CC="/opt/homebrew/opt/llvm/bin/clang"
+CXX="/opt/homebrew/opt/llvm/bin/clang++"
+PATH=/opt/homebrew/opt/llvm/bin:$PATH
+
+# COMPILER=(
+#   -s compiler=clang
+#   -s compiler.version=21
+#   -s compiler.libcxx=libc++
+#   -s compiler.cppstd=gnu20
+#   --build=missing
+# )
+
+set -euo pipefail
+
+OPTIMIZE="Debug"
+WASM="false"
+
+for arg in "$@"; do
+  case "$arg" in
+    --optimize=Debug|--optimize=Release)
+      OPTIMIZE="${arg#*=}"
+      ;;
+    --wasm)
+      WASM="true"
+      ;;
+    *)
+      echo "Unknown option: $arg"
+      echo "Usage: $0 [--optimize=Debug|Release] [--wasm]"
+      exit 1
+      ;;
+  esac
+done
+
+build_conan() {
+  BUILD_TYPE="$1"
+  BUILD="$2"
+  WASM="$3"
+
+  if [ "$WASM" = "true" ]; then
+    libs/emsdk/emsdk install 4.0.20
+    libs/emsdk/emsdk activate 4.0.20
+    source libs/emsdk/emsdk_env.sh
+
+    conan install . -pr profiles/emscripten -s build_type="$BUILD_TYPE" --output-folder="$BUILD" --build missing
+    emcmake cmake -S . -B "$BUILD" -DCMAKE_TOOLCHAIN_FILE="$BUILD/conan_toolchain.cmake" -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+  else
+    conan install . -pr profiles/mac -s build_type="$BUILD_TYPE" --build missing --output-folder="$BUILD"
+    cmake -S . -B "$BUILD" -DCMAKE_TOOLCHAIN_FILE="$BUILD/conan_toolchain.cmake" -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+  fi
+
+  cmake --build "$BUILD"
+}
+
+if [ "$WASM" = "true" ]; then
+  build_conan "$OPTIMIZE" "build/wasm-$OPTIMIZE" "true"
+else
+  build_conan "$OPTIMIZE" "build/$OPTIMIZE" "false"
+fi

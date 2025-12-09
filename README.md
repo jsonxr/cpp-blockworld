@@ -49,10 +49,13 @@ Install
 # libc++ vs stdlibc++ might depend on platform...
 # https://stackoverflow.com/questions/14972425/should-i-use-libc-or-libstdc
 
-# Build Debug native
-bin/build
-bin/build --wasm
+cmake --preset Debug
+cmake --build --preset Debug
+# Run
+build/Debug/blockworld
 
+# Clean
+rm -rf build CMakeUserPresets.json
 ```
 
 # Wasm
@@ -61,7 +64,8 @@ bin/build --wasm
 # Install emscripten
 git clone https://github.com/emscripten-core/emsdk.git libs/emsdk
 # Build
-bin/wasmbuild
+bin/build --wasm
+
 # Run
 bin/serve-wasm  # Node.js server with pthread headers
 open http://localhost:8080/
@@ -166,6 +170,8 @@ https://en.cppreference.com/w/cpp/compiler_support
 - [block bench](https://www.blockbench.net/downloads) - low polygon editor
 
 # TODO
+
+- [CMake + Conan + VS Code](https://www.youtube.com/watch?v=kswbIXYBCpo)
 
 - Modify cmake to recompile for asset change
     - [blog article](https://jeremimucha.com/2021/05/cmake-managing-resources/)

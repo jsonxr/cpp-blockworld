@@ -1,5 +1,5 @@
 .DS_Store
-build*
+build/*
 cmake-*
 CMakeUserPresets.json
 client/assets/minecraft
